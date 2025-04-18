@@ -48,6 +48,7 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<string | null>(null);
+  const [encryptionResult, setEncryptionResult] = useState<string | null>(null);
   
   
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -70,120 +71,224 @@ export default function HomePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert(`Handling submit for: ${selectedOperation}`);
     
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
-
+    // Define API URL 
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
     
-
     try {
       setIsLoading(true);
       setError(null);
-
-      switch (selectedOperation) {
-        case "generate-password":
-          if (!useUppercase && !useLowercase && !useNumbers && !useSymbols) {
-            throw new Error("At least one character type must be selected");
-          }
-          
-          if (passwordLength < 8 || passwordLength > 128) {
-            throw new Error("Password length must be between 8 and 128 characters");
-          }
-          
-          const payload = {
-            length: passwordLength,
-            use_uppercase: useUppercase,
-            use_lowercase: useLowercase,
-            use_numbers: useNumbers,
-            use_symbols: useSymbols
-          };
-          
-          console.log("Generating password with parameters:", payload);
-          
-          
-          
-          break;
-        case "generate-key":
-          // This will be implemented by the user for backend integration
-          console.log("Operation:", selectedOperation)
-          console.log("Key Type:", keyType)
-          console.log("Encryption Method:", encryptionMethod)
-          
-          
-          break;
-        case "encrypt-symmetric":
-          // This will be implemented by the user for backend integration
-          console.log("Operation:", selectedOperation)
-          console.log("File:", file)
-          console.log("Key File:", keyFile)
-          console.log("Encryption Method:", encryptionMethod)
-          console.log("Block Mode:", blockMode)
-          console.log("Custom IV:", customIv)
-          console.log("Decrypt IV:", decryptIv)
-          break;
-        case "decrypt-symmetric":
-          // This will be implemented by the user for backend integration
-          console.log("Operation:", selectedOperation)
-          console.log("File:", file)
-          console.log("Key File:", keyFile)
-          console.log("Encryption Method:", encryptionMethod)
-          console.log("Block Mode:", blockMode)
-          console.log("Decrypt IV:", decryptIv)
-          break;
-        case "encrypt-asymmetric":
-          // This will be implemented by the user for backend integration
-          console.log("Operation:", selectedOperation)
-          console.log("File:", file)
-          console.log("Key File:", keyFile)
-          console.log("Encryption Method:", encryptionMethod)
-          console.log("Block Mode:", blockMode)
-          console.log("Custom IV:", customIv)
-          console.log("Decrypt IV:", decryptIv)
-          break;
-        case "decrypt-asymmetric":
-          // This will be implemented by the user for backend integration
-          console.log("Operation:", selectedOperation)
-          console.log("File:", file)
-          console.log("Key File:", keyFile)
-          console.log("Encryption Method:", encryptionMethod)
-          console.log("Block Mode:", blockMode)
-          console.log("Decrypt IV:", decryptIv)
-          break;
-        case "hash-file":
-          // This will be implemented by the user for backend integration
-          console.log("Operation:", selectedOperation)
-          console.log("File:", file)
-          console.log("Encryption Method:", encryptionMethod)
-          console.log("Block Mode:", blockMode)
-          console.log("Custom IV:", customIv)
-          console.log("Decrypt IV:", decryptIv)
-          break;
-        case "compare-hash":
-          // This will be implemented by the user for backend integration
-          console.log("Operation:", selectedOperation)
-          console.log("File:", file)
-          console.log("Compare File:", compareFile)
-          console.log("Encryption Method:", encryptionMethod)
-          console.log("Block Mode:", blockMode)
-          console.log("Custom IV:", customIv)
-          console.log("Decrypt IV:", decryptIv)
-          break;
-        case "share-key":
-          // This will be implemented by the user for backend integration
-          console.log("Operation:", selectedOperation)
-          console.log("Key Type:", keyType)
-          console.log("Encryption Method:", encryptionMethod)
-          console.log("Block Mode:", blockMode)
-          console.log("Custom IV:", customIv)
-          console.log("Decrypt IV:", decryptIv)
-          break;
+      
+      if (selectedOperation === "generate-password") {
+        // Validation
+        if (!useUppercase && !useLowercase && !useNumbers && !useSymbols) {
+          throw new Error("At least one character type must be selected");
+        }
+        
+        if (passwordLength < 8 || passwordLength > 128) {
+          throw new Error("Password length must be between 8 and 128 characters");
+        }
+        
+        // Create payload using state variables
+        const payload = {
+          length: passwordLength,
+          use_uppercase: useUppercase,
+          use_lowercase: useLowercase,
+          use_numbers: useNumbers,
+          use_symbols: useSymbols
+        };
+        
+        console.log("Generating password with parameters:", payload);
+        
+        // Make the actual API call
+        const response = await fetch(`${API_URL}/generate/password`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => null);
+          throw new Error(errorData?.detail || `Password generation failed: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        setGeneratedPassword(data.password);
       }
+      
+      if (selectedOperation === "generate-key") {
+        // Validation
+        if (!keyName.trim()) {
+          throw new Error("Key name is required");
+        }
+        
+        // Get the current algorithm based on key type
+        const algorithm = keyType === "symmetric" ? symmetricAlgorithm : asymmetricAlgorithm;
+        
+        // Format algorithm for API (convert from kebab-case to uppercase with dash)
+        const formattedAlgorithm = algorithm.split('-')
+          .map(part => part.toUpperCase())
+          .join('-');
+        
+        const payload = {
+          key_type: keyType,
+          algorithm: formattedAlgorithm,
+          key_name: keyName.trim()
+        };
+        
+        console.log("Generating key with parameters:", payload);
+        
+        // Make the actual API call
+        const response = await fetch(`${API_URL}/generate/key`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => null);
+          throw new Error(errorData?.detail || `Key generation failed: ${response.statusText}`);
+        }
+        
+        // Handle file download from the response
+        const blob = await response.blob();
+        // Get filename from content-disposition header if available
+        const contentDisposition = response.headers.get('content-disposition');
+        let filename = `${keyName}.key`;
+        
+        if (contentDisposition && contentDisposition.includes('filename=')) {
+          const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+          if (filenameMatch && filenameMatch[1]) {
+            filename = filenameMatch[1];
+          }
+        }
+        
+        const downloadUrl = window.URL.createObjectURL(blob);
+        
+        // Create a download link
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(downloadUrl);
+        
+        setGeneratedKeyMessage(`Key "${keyName}" (${algorithm}) generated successfully and downloaded.`);
+      }
+      
+      if (selectedOperation === "encrypt-symmetric") {
+        // Validation
+        if (!file) {
+          throw new Error("Please select a file to encrypt");
+        }
+        
+        // Format algorithm and mode for the backend (convert to uppercase)
+        const algorithm = encryptionMethod
+          .split('-')
+          .map(part => part.toUpperCase())
+          .join('-');
+        
+        const mode = blockMode.toUpperCase();
+        
+        // Create FormData to send files and parameters
+        const formData = new FormData();
+        formData.append("algorithm", algorithm);
+        formData.append("mode", mode);
+        formData.append("file", file);
+        
+        // Add key file if provided
+        if (keyFile) {
+          formData.append("key_file", keyFile);
+        }
+        
+        // Add custom IV if provided and required (CBC mode)
+        if (blockMode === "cbc" && customIv.trim()) {
+          formData.append("iv", customIv.trim());
+        }
+        
+        console.log("Encrypting file with parameters:", {
+          file: file.name,
+          algorithm,
+          mode,
+          hasKeyFile: !!keyFile,
+          hasCustomIv: blockMode === "cbc" && !!customIv.trim()
+        });
+        
+        // Make the actual API call
+        const response = await fetch(`${API_URL}/encrypt/symmetric`, {
+          method: "POST",
+          body: formData,
+        });
+        
+        if (!response.ok) {
+          // Try to get detailed error if available
+          let errorMessage = `Encryption failed: ${response.statusText}`;
+          try {
+            const errorData = await response.json();
+            if (errorData.detail) {
+              errorMessage = errorData.detail;
+            }
+          } catch (e) {
+            // If we can't parse the error as JSON, use the default message
+          }
+          throw new Error(errorMessage);
+        }
+        
+        // Handle the encrypted file download
+        const blob = await response.blob();
+        // Try to get filename from content-disposition header
+        const contentDisposition = response.headers.get('content-disposition');
+        let filename = `encrypted_${file.name}`;
+        
+        if (contentDisposition && contentDisposition.includes('filename=')) {
+          const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+          if (filenameMatch && filenameMatch[1]) {
+            filename = filenameMatch[1];
+          }
+        }
+        
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        
+        // Check if the API returned auto-generated key/IV in headers
+        const autoGenKey = response.headers.get('x-generated-key');
+        const autoGenIv = response.headers.get('x-generated-iv');
+        
+        if (autoGenKey || autoGenIv) {
+          let message = "File encrypted successfully. ";
+          if (autoGenKey) {
+            message += "An encryption key was automatically generated. Make sure to save it for decryption.";
+            // You could also display the key or offer to download it
+          }
+          if (autoGenIv) {
+            message += "An initialization vector (IV) was automatically generated. Make sure to save it for decryption.";
+            // You could also display the IV or offer to download it
+          }
+          setEncryptionResult(message); // You'll need to add this state variable
+        } else {
+          setEncryptionResult("File encrypted successfully and downloaded."); // You'll need to add this state variable
+        }
+      }
+      
+      // ... other operations
     } catch (err) {
       console.error(err);
       setError(err instanceof Error ? err.message : "An unknown error occurred");
+    } finally {
       setIsLoading(false);
     }
-  }
+  };
 
   return (
     <ProtectedRoute>
