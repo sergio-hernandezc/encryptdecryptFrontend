@@ -80,8 +80,8 @@ export default function ManagePage() {
       setError(null)
 
       // Get the current session token to authenticate with the backend
-      const { data: sessionData } = await supabase.auth.getSession()
-      const token = sessionData.session?.access_token
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
 
       if (!token) {
         throw new Error("Authentication token not found")
@@ -100,9 +100,11 @@ export default function ManagePage() {
       })
 
       const result = await response.json()
+      console.log("Account deletion response:", result);
 
-      if (response.ok && result.success) {
+      if (response.ok) {
         // If successful, sign out the user
+        console.log("Account deleted successfully, signing out");
         await signOut()
       } else {
         setError(result.error || "Failed to delete account")
