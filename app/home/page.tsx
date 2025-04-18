@@ -36,10 +36,7 @@ export default function HomePage() {
   const [blockMode, setBlockMode] = useState("cbc")
   const [customIv, setCustomIv] = useState("")
   const [decryptIv, setDecryptIv] = useState("")
-  const [keyType, setKeyType] = useState<"symmetric" | "asymmetric">("symmetric")
-  const [symmetricAlgorithm, setSymmetricAlgorithm] = useState("aes-256")
-  const [asymmetricAlgorithm, setAsymmetricAlgorithm] = useState("rsa-2048")
-  const [keyName, setKeyName] = useState("my_key")
+  const [keyType, setKeyType] = useState("symmetric")
   const [generatedKey, setGeneratedKey] = useState<string | null>(null)
   const [isGeneratingKey, setIsGeneratingKey] = useState(false)
   const [passwordLength, setPasswordLength] = useState(12);
@@ -48,7 +45,6 @@ export default function HomePage() {
   const [useNumbers, setUseNumbers] = useState(true);
   const [useSymbols, setUseSymbols] = useState(true);
   const [generatedPassword, setGeneratedPassword] = useState<string | null>(null);
-  const [generatedKeyMessage, setGeneratedKeyMessage] = useState<string | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -70,7 +66,7 @@ export default function HomePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-
+    
     const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
 
     const [isLoading, setIsLoading] = useState(false);
@@ -242,6 +238,7 @@ export default function HomePage() {
                           <div className="flex items-center space-x-2">
                             <Input
                               id="password-length"
+                              name="password-length"
                               type="number"
                               min={8}
                               max={128}
@@ -257,7 +254,8 @@ export default function HomePage() {
                           <div className="space-y-1">
                             <div className="flex items-center space-x-2">
                               <Checkbox 
-                                id="uppercase" 
+                                id="uppercase"
+                                name="uppercase"
                                 checked={useUppercase} 
                                 onCheckedChange={(checked) => setUseUppercase(checked === true)}
                               />
@@ -265,7 +263,8 @@ export default function HomePage() {
                             </div>
                             <div className="flex items-center space-x-2">
                               <Checkbox 
-                                id="lowercase" 
+                                id="lowercase"
+                                name="lowercase"
                                 checked={useLowercase} 
                                 onCheckedChange={(checked) => setUseLowercase(checked === true)}
                               />
@@ -273,7 +272,8 @@ export default function HomePage() {
                             </div>
                             <div className="flex items-center space-x-2">
                               <Checkbox 
-                                id="numbers" 
+                                id="numbers"
+                                name="numbers"
                                 checked={useNumbers} 
                                 onCheckedChange={(checked) => setUseNumbers(checked === true)}
                               />
@@ -281,7 +281,8 @@ export default function HomePage() {
                             </div>
                             <div className="flex items-center space-x-2">
                               <Checkbox 
-                                id="symbols" 
+                                id="symbols"
+                                name="symbols"
                                 checked={useSymbols} 
                                 onCheckedChange={(checked) => setUseSymbols(checked === true)}
                               />
@@ -323,7 +324,7 @@ export default function HomePage() {
                       <div className="space-y-4">
                         <div className="space-y-2">
                           <Label>Key Type</Label>
-                          <RadioGroup value={keyType} onValueChange={(value) => setKeyType(value as "symmetric" | "asymmetric")}>
+                          <RadioGroup value={keyType} onValueChange={setKeyType}>
                             <div className="flex items-center space-x-2">
                               <RadioGroupItem value="symmetric" id="symmetric" />
                               <Label htmlFor="symmetric">Symmetric Key</Label>
@@ -338,13 +339,14 @@ export default function HomePage() {
                         {keyType === "symmetric" ? (
                           <div className="space-y-2">
                             <Label>Key Algorithm</Label>
-                            <Select value={symmetricAlgorithm} onValueChange={setSymmetricAlgorithm}>
+                            <Select defaultValue="aes-256">
                               <SelectTrigger>
                                 <SelectValue placeholder="Select algorithm" />
                               </SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="aes-128">AES-128</SelectItem>
                                 <SelectItem value="aes-256">AES-256</SelectItem>
+                                <SelectItem value="rsa-2048">RSA-2048</SelectItem>
                                 <SelectItem value="3des">3DES</SelectItem>
                               </SelectContent>
                             </Select>
@@ -352,7 +354,7 @@ export default function HomePage() {
                         ) : (
                           <div className="space-y-2">
                             <Label>Key Algorithm</Label>
-                            <Select value={asymmetricAlgorithm} onValueChange={setAsymmetricAlgorithm}>
+                            <Select defaultValue="rsa-2048">
                               <SelectTrigger>
                                 <SelectValue placeholder="Select algorithm" />
                               </SelectTrigger>
@@ -366,12 +368,7 @@ export default function HomePage() {
 
                         <div className="space-y-2">
                           <Label htmlFor="key-name">Key Name (for file download)</Label>
-                          <Input 
-                            id="key-name" 
-                            placeholder="my_key" 
-                            value={keyName}
-                            onChange={(e) => setKeyName(e.target.value)}
-                          />
+                          <Input id="key-name" placeholder="my_key" />
                         </div>
 
                         <div className="space-y-4">
@@ -381,16 +378,18 @@ export default function HomePage() {
                           </Button>
 
                           {/* Result section - would be conditionally shown after generation */}
-                          {generatedKeyMessage && (
-                            <div className="border rounded-md p-4 space-y-4">
-                              <div className="space-y-2">
-                                <Label>Key Generation Status</Label>
-                                <div className="bg-muted p-2 rounded font-mono text-xs break-all">
-                                  {generatedKeyMessage}
-                                </div>
+                          <div className="border rounded-md p-4 space-y-4">
+                            <div className="space-y-2">
+                              <Label>Generated Key</Label>
+                              <div className="bg-muted p-2 rounded font-mono text-xs break-all">
+                                f8a2e9c1d7b6a5f4e3d2c1b0a9f8e7d6
                               </div>
                             </div>
-                          )}
+                            <Button className="w-full" variant="outline">
+                              <Download className="mr-2 h-4 w-4" />
+                              Download Key
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     )}
