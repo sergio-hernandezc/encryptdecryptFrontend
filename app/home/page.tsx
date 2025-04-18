@@ -52,6 +52,10 @@ export default function HomePage() {
   const [keyName, setKeyName] = useState("my_key");
   const [symmetricAlgorithm, setSymmetricAlgorithm] = useState("aes-256");
   const [asymmetricAlgorithm, setAsymmetricAlgorithm] = useState("rsa-2048");
+  const [decryptionResult, setDecryptionResult] = useState<string | null>(null);
+  const [asymmetricKeyFile, setAsymmetricKeyFile] = useState<File | null>(null);
+  const [decryptionAsymmetricResult, setDecryptionAsymmetricResult] = useState<string | null>(null);
+  const [encryptionAsymmetricResult, setEncryptionAsymmetricResult] = useState<string | null>(null);
   
   
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -184,7 +188,7 @@ export default function HomePage() {
         document.body.removeChild(a);
         window.URL.revokeObjectURL(downloadUrl);
         
-        setGeneratedKeyMessage(`Key "${keyName}" (${algorithm}) generated successfully and downloaded.`);
+        
       }
       
       if (selectedOperation === "encrypt-symmetric") {
@@ -286,8 +290,235 @@ export default function HomePage() {
           setEncryptionResult("File encrypted successfully and downloaded."); // You'll need to add this state variable
         }
       }
-      
-      // ... other operations
+
+      if (selectedOperation === "decrypt-symmetric") {
+        // Validation
+        if (!file) {
+          throw new Error("Please select an encrypted file to decrypt");
+        }
+        
+        // Format algorithm and mode for the backend (convert to uppercase)
+        const algorithm = encryptionMethod
+          .split('-')
+          .map(part => part.toUpperCase())
+          .join('-');
+        
+        const mode = blockMode.toUpperCase();
+        
+        // Create FormData to send files and parameters
+        const formData = new FormData();
+        formData.append("algorithm", algorithm);
+        formData.append("mode", mode);
+        formData.append("file", file);
+        
+        // Add key file if provided
+        if (keyFile) {
+          formData.append("key_file", keyFile);
+        }
+        
+        // Add IV if provided and required (CBC mode)
+        if (blockMode === "cbc" && decryptIv.trim()) {
+          formData.append("iv", decryptIv.trim());
+        } else if (blockMode === "cbc") {
+          throw new Error("IV is required for CBC mode decryption");
+        }
+        
+        console.log("Decrypting file with parameters:", {
+          file: file.name,
+          algorithm,
+          mode,
+          hasKeyFile: !!keyFile,
+          hasIv: blockMode === "cbc" && !!decryptIv.trim()
+        });
+        
+        // Make the API call
+        const response = await fetch(`${API_URL}/api/decrypt/symmetric`, {
+          method: "POST",
+          body: formData,
+        });
+        
+        if (!response.ok) {
+          // Try to get detailed error if available
+          let errorMessage = `Decryption failed: ${response.statusText}`;
+          try {
+            const errorData = await response.json();
+            if (errorData.detail) {
+              errorMessage = errorData.detail;
+            }
+          } catch (e) {
+            // If we can't parse the error as JSON, use the default message
+          }
+          throw new Error(errorMessage);
+        }
+        
+        // Handle the decrypted file download
+        const blob = await response.blob();
+        
+        // Try to get filename from content-disposition header
+        const contentDisposition = response.headers.get('content-disposition');
+        let filename = `decrypted_${file.name}`;
+        
+        if (contentDisposition && contentDisposition.includes('filename=')) {
+          const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+          if (filenameMatch && filenameMatch[1]) {
+            filename = filenameMatch[1];
+          }
+        }
+        
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        
+        setDecryptionResult("File decrypted successfully and downloaded.");
+      }
+
+      if (selectedOperation === "encrypt-asymmetric") {
+        // Validation
+        if (!file) {
+          throw new Error("Please select a file to encrypt");
+        }
+        
+        if (!keyFile) {
+          throw new Error("Please upload a public key file for encryption");
+        }
+        
+        // Create FormData to send files and parameters
+        const formData = new FormData();
+        formData.append("algorithm", "RSA-2048"); // Assuming RSA-2048 is the algorithm
+        formData.append("file", file);
+        formData.append("public_key_file", keyFile);
+        
+        console.log("Encrypting file with asymmetric encryption:", {
+          file: file.name,
+          publicKeyFile: keyFile.name
+        });
+        
+        // Make the API call
+        const response = await fetch(`${API_URL}/api/encrypt/asymmetric`, {
+          method: "POST",
+          body: formData,
+        });
+        
+        if (!response.ok) {
+          // Try to get detailed error if available
+          let errorMessage = `Asymmetric encryption failed: ${response.statusText}`;
+          try {
+            const errorData = await response.json();
+            if (errorData.detail) {
+              errorMessage = errorData.detail;
+            }
+          } catch (e) {
+            // If we can't parse the error as JSON, use the default message
+          }
+          throw new Error(errorMessage);
+        }
+        
+        // Handle the encrypted file download
+        const blob = await response.blob();
+        
+        // Try to get filename from content-disposition header
+        const contentDisposition = response.headers.get('content-disposition');
+        let filename = `encrypted_${file.name}`;
+        
+        if (contentDisposition && contentDisposition.includes('filename=')) {
+          const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+          if (filenameMatch && filenameMatch[1]) {
+            filename = filenameMatch[1];
+          }
+        }
+        
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        
+        setEncryptionAsymmetricResult("File encrypted successfully and downloaded.");
+      }
+
+      if (selectedOperation === "decrypt-asymmetric") {
+        // Validation
+        if (!file) {
+          throw new Error("Please select an encrypted file to decrypt");
+        }
+        
+        if (!keyFile) {
+          throw new Error("Please upload a private key file for decryption");
+        }
+        
+        // Create FormData to send files and parameters
+        const formData = new FormData();
+        formData.append("algorithm", "RSA-2048"); // Assuming RSA-2048 is the algorithm
+        formData.append("file", file);
+        formData.append("private_key_file", keyFile);
+        
+        console.log("Decrypting file with asymmetric encryption:", {
+          file: file.name,
+          privateKeyFile: keyFile.name
+        });
+        
+        // Make the API call
+        const response = await fetch(`${API_URL}/api/decrypt/asymmetric`, {
+          method: "POST",
+          body: formData,
+        });
+        
+        if (!response.ok) {
+          // Try to get detailed error if available
+          let errorMessage = `Asymmetric decryption failed: ${response.statusText}`;
+          try {
+            const errorData = await response.json();
+            if (errorData.detail) {
+              errorMessage = errorData.detail;
+            }
+          } catch (e) {
+            // If we can't parse the error as JSON, use the default message
+          }
+          throw new Error(errorMessage);
+        }
+        
+        // Handle the decrypted file download
+        const blob = await response.blob();
+        
+        // Try to get filename from content-disposition header
+        const contentDisposition = response.headers.get('content-disposition');
+        let filename = `decrypted_${file.name}`;
+        
+        if (contentDisposition && contentDisposition.includes('filename=')) {
+          const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+          if (filenameMatch && filenameMatch[1]) {
+            filename = filenameMatch[1];
+          }
+        }
+        
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        
+        setDecryptionAsymmetricResult("File decrypted successfully and downloaded.");
+      }
+
+      if (selectedOperation === "hash-file") {
+      }
+
+      if (selectedOperation === "compare-hash") {
+      }
+
+      if (selectedOperation === "share-key") {
+      }
     } catch (err) {
       console.error(err);
       setError(err instanceof Error ? err.message : "An unknown error occurred");
@@ -649,47 +880,13 @@ export default function HomePage() {
                         </div>
 
                         <div className="space-y-2">
-                          <Label>Decryption Key</Label>
-                          <Tabs defaultValue="input">
-                            <TabsList className="grid w-full grid-cols-2">
-                              <TabsTrigger value="input">Enter Key</TabsTrigger>
-                              <TabsTrigger value="upload">Upload Key File</TabsTrigger>
-                            </TabsList>
-                            <TabsContent value="input" className="space-y-2">
-                              <Input
-                                id="decryption-key"
-                                type="password"
-                                placeholder="Enter decryption key (hex format)"
-                              />
-                            </TabsContent>
-                            <TabsContent value="upload" className="space-y-2">
-                              <div className="flex items-center gap-2">
-                                <Input
-                                  id="decrypt-key-file-upload"
-                                  type="file"
-                                  onChange={handleKeyFileChange}
-                                  className="flex-1"
-                                />
-                                {keyFile && (
-                                  <Button variant="outline" size="sm" onClick={() => setKeyFile(null)}>
-                                    Clear
-                                  </Button>
-                                )}
-                              </div>
-                              {keyFile && <p className="text-sm text-muted-foreground">Selected: {keyFile.name}</p>}
-                            </TabsContent>
-                          </Tabs>
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label>Encryption Algorithm (must match what was used for encryption)</Label>
-                          <Select defaultValue="aes-256">
+                          <Label>Encryption Algorithm</Label>
+                          <Select value={encryptionMethod} onValueChange={setEncryptionMethod}>
                             <SelectTrigger>
                               <SelectValue placeholder="Select algorithm" />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="aes-128">AES-128</SelectItem>
-                              
                               <SelectItem value="aes-256">AES-256</SelectItem>
                               <SelectItem value="3des">3DES</SelectItem>
                             </SelectContent>
@@ -697,10 +894,10 @@ export default function HomePage() {
                         </div>
 
                         <div className="space-y-2">
-                          <Label>Block Mode (must match what was used for encryption)</Label>
-                          <Select defaultValue="cbc">
+                          <Label>Block Mode</Label>
+                          <Select value={blockMode} onValueChange={setBlockMode}>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select block mode" />
+                              <SelectValue placeholder="Select mode" />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="cbc">CBC</SelectItem>
@@ -709,31 +906,45 @@ export default function HomePage() {
                           </Select>
                         </div>
 
-                        {/* IV Input for decryption - only show for CBC mode */}
                         {blockMode === "cbc" && (
                           <div className="space-y-2">
-                            <Label htmlFor="decrypt-iv">Initialization Vector (IV) - Hex Format</Label>
-                            <Input
-                              id="decrypt-iv"
-                              placeholder="e.g., 0123456789abcdef0123456789abcdef"
+                            <Label htmlFor="decrypt-iv">Initialization Vector (IV) - Hex</Label>
+                            <Input 
+                              id="decrypt-iv" 
+                              placeholder="Enter the IV used for encryption" 
                               value={decryptIv}
                               onChange={(e) => setDecryptIv(e.target.value)}
-                              required
                             />
-                            <p className="text-xs text-muted-foreground">
-                              Enter the same IV that was used for encryption.
-                            </p>
                           </div>
                         )}
 
+                        <div className="space-y-2">
+                          <Label htmlFor="decrypt-key-upload">Upload Key File</Label>
+                          <div className="flex items-center gap-2">
+                            <Input
+                              id="decrypt-key-upload"
+                              type="file"
+                              onChange={handleKeyFileChange}
+                              className="flex-1"
+                            />
+                            {keyFile && (
+                              <Button variant="outline" size="sm" onClick={() => setKeyFile(null)}>
+                                Clear
+                              </Button>
+                            )}
+                          </div>
+                          {keyFile && <p className="text-sm text-muted-foreground">Selected: {keyFile.name}</p>}
+                        </div>
+
                         <Button type="submit" className="w-full">
-                          <Lock className="mr-2 h-4 w-4" />
                           Decrypt File
                         </Button>
 
-                        <div className="text-sm text-muted-foreground">
-                          The decrypted file will be available for download after decryption.
-                        </div>
+                        {decryptionResult && (
+                          <div className="mt-4 border rounded-md p-4 bg-green-50 text-green-800">
+                            <p>{decryptionResult}</p>
+                          </div>
+                        )}
                       </div>
                     )}
 
@@ -758,19 +969,6 @@ export default function HomePage() {
                         </div>
 
                         <div className="space-y-2">
-                          <Label>Encryption Algorithm</Label>
-                          <Select defaultValue="rsa-2048">
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select algorithm" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="rsa-2048">RSA-2048</SelectItem>
-                              
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div className="space-y-2">
                           <Label htmlFor="public-key-upload">Upload Public Key File</Label>
                           <div className="flex items-center gap-2">
                             <Input
@@ -788,14 +986,28 @@ export default function HomePage() {
                           {keyFile && <p className="text-sm text-muted-foreground">Selected: {keyFile.name}</p>}
                         </div>
 
+                        <div className="space-y-2">
+                          <Label>Encryption Algorithm</Label>
+                          <Select defaultValue="rsa-2048" disabled>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select algorithm" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="rsa-2048">RSA-2048</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
                         <Button type="submit" className="w-full">
-                          <Lock className="mr-2 h-4 w-4" />
                           Encrypt File
                         </Button>
 
-                        <div className="text-sm text-muted-foreground">
-                          The encrypted file will be available for download after encryption.
-                        </div>
+                        {/* Display success or error message */}
+                        {encryptionAsymmetricResult && (
+                          <div className="mt-4 border rounded-md p-4 bg-green-50 text-green-800">
+                            <p>{encryptionAsymmetricResult}</p>
+                          </div>
+                        )}
                       </div>
                     )}
 
@@ -837,29 +1049,28 @@ export default function HomePage() {
                           {keyFile && <p className="text-sm text-muted-foreground">Selected: {keyFile.name}</p>}
                         </div>
 
-                        
-
                         <div className="space-y-2">
-                          <Label>Encryption Algorithm (must match what was used for encryption)</Label>
-                          <Select defaultValue="rsa-2048">
+                          <Label>Encryption Algorithm</Label>
+                          <Select defaultValue="rsa-2048" disabled>
                             <SelectTrigger>
                               <SelectValue placeholder="Select algorithm" />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="rsa-2048">RSA-2048</SelectItem>
-                              
                             </SelectContent>
                           </Select>
                         </div>
 
                         <Button type="submit" className="w-full">
-                          <Lock className="mr-2 h-4 w-4" />
                           Decrypt File
                         </Button>
 
-                        <div className="text-sm text-muted-foreground">
-                          The decrypted file will be available for download after decryption.
-                        </div>
+                        {/* Display success or error message */}
+                        {decryptionAsymmetricResult && (
+                          <div className="mt-4 border rounded-md p-4 bg-green-50 text-green-800">
+                            <p>{decryptionAsymmetricResult}</p>
+                          </div>
+                        )}
                       </div>
                     )}
 
