@@ -36,9 +36,19 @@ export default function HomePage() {
   const [blockMode, setBlockMode] = useState("cbc")
   const [customIv, setCustomIv] = useState("")
   const [decryptIv, setDecryptIv] = useState("")
-  const [keyType, setKeyType] = useState("symmetric")
+  const [keyType, setKeyType] = useState<"symmetric" | "asymmetric">("symmetric")
+  const [symmetricAlgorithm, setSymmetricAlgorithm] = useState("aes-256")
+  const [asymmetricAlgorithm, setAsymmetricAlgorithm] = useState("rsa-2048")
+  const [keyName, setKeyName] = useState("my_key")
   const [generatedKey, setGeneratedKey] = useState<string | null>(null)
   const [isGeneratingKey, setIsGeneratingKey] = useState(false)
+  const [passwordLength, setPasswordLength] = useState(12);
+  const [useUppercase, setUseUppercase] = useState(true);
+  const [useLowercase, setUseLowercase] = useState(true);
+  const [useNumbers, setUseNumbers] = useState(true);
+  const [useSymbols, setUseSymbols] = useState(true);
+  const [generatedPassword, setGeneratedPassword] = useState<string | null>(null);
+  const [generatedKeyMessage, setGeneratedKeyMessage] = useState<string | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -58,16 +68,126 @@ export default function HomePage() {
     }
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // This will be implemented by the user for backend integration
-    console.log("Operation:", selectedOperation)
-    console.log("File:", file)
-    console.log("Key File:", keyFile)
-    console.log("Encryption Method:", encryptionMethod)
-    console.log("Block Mode:", blockMode)
-    console.log("Custom IV:", customIv)
-    console.log("Decrypt IV:", decryptIv)
+
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
+
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [result, setResult] = useState<string | null>(null);
+
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      switch (selectedOperation) {
+        case "generate-password":
+          if (!useUppercase && !useLowercase && !useNumbers && !useSymbols) {
+            throw new Error("At least one character type must be selected");
+          }
+          
+          if (passwordLength < 8 || passwordLength > 128) {
+            throw new Error("Password length must be between 8 and 128 characters");
+          }
+          
+          const payload = {
+            length: passwordLength,
+            use_uppercase: useUppercase,
+            use_lowercase: useLowercase,
+            use_numbers: useNumbers,
+            use_symbols: useSymbols
+          };
+          
+          console.log("Generating password with parameters:", payload);
+          
+          setTimeout(() => {
+            const mockPassword = "Tz7!kL9#mNb@pQ";
+            setGeneratedPassword(mockPassword);
+            setIsLoading(false);
+          }, 500);
+          
+          break;
+        case "generate-key":
+          // This will be implemented by the user for backend integration
+          console.log("Operation:", selectedOperation)
+          console.log("Key Type:", keyType)
+          console.log("Encryption Method:", encryptionMethod)
+          
+          
+          break;
+        case "encrypt-symmetric":
+          // This will be implemented by the user for backend integration
+          console.log("Operation:", selectedOperation)
+          console.log("File:", file)
+          console.log("Key File:", keyFile)
+          console.log("Encryption Method:", encryptionMethod)
+          console.log("Block Mode:", blockMode)
+          console.log("Custom IV:", customIv)
+          console.log("Decrypt IV:", decryptIv)
+          break;
+        case "decrypt-symmetric":
+          // This will be implemented by the user for backend integration
+          console.log("Operation:", selectedOperation)
+          console.log("File:", file)
+          console.log("Key File:", keyFile)
+          console.log("Encryption Method:", encryptionMethod)
+          console.log("Block Mode:", blockMode)
+          console.log("Decrypt IV:", decryptIv)
+          break;
+        case "encrypt-asymmetric":
+          // This will be implemented by the user for backend integration
+          console.log("Operation:", selectedOperation)
+          console.log("File:", file)
+          console.log("Key File:", keyFile)
+          console.log("Encryption Method:", encryptionMethod)
+          console.log("Block Mode:", blockMode)
+          console.log("Custom IV:", customIv)
+          console.log("Decrypt IV:", decryptIv)
+          break;
+        case "decrypt-asymmetric":
+          // This will be implemented by the user for backend integration
+          console.log("Operation:", selectedOperation)
+          console.log("File:", file)
+          console.log("Key File:", keyFile)
+          console.log("Encryption Method:", encryptionMethod)
+          console.log("Block Mode:", blockMode)
+          console.log("Decrypt IV:", decryptIv)
+          break;
+        case "hash-file":
+          // This will be implemented by the user for backend integration
+          console.log("Operation:", selectedOperation)
+          console.log("File:", file)
+          console.log("Encryption Method:", encryptionMethod)
+          console.log("Block Mode:", blockMode)
+          console.log("Custom IV:", customIv)
+          console.log("Decrypt IV:", decryptIv)
+          break;
+        case "compare-hash":
+          // This will be implemented by the user for backend integration
+          console.log("Operation:", selectedOperation)
+          console.log("File:", file)
+          console.log("Compare File:", compareFile)
+          console.log("Encryption Method:", encryptionMethod)
+          console.log("Block Mode:", blockMode)
+          console.log("Custom IV:", customIv)
+          console.log("Decrypt IV:", decryptIv)
+          break;
+        case "share-key":
+          // This will be implemented by the user for backend integration
+          console.log("Operation:", selectedOperation)
+          console.log("Key Type:", keyType)
+          console.log("Encryption Method:", encryptionMethod)
+          console.log("Block Mode:", blockMode)
+          console.log("Custom IV:", customIv)
+          console.log("Decrypt IV:", decryptIv)
+          break;
+      }
+    } catch (err) {
+      console.error(err);
+      setError(err instanceof Error ? err.message : "An unknown error occurred");
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -119,52 +239,83 @@ export default function HomePage() {
                       <div className="space-y-4">
                         <div className="space-y-2">
                           <Label htmlFor="password-length">Password Length</Label>
-                          <Input id="password-length" type="number" defaultValue={12} min={8} max={64} />
+                          <div className="flex items-center space-x-2">
+                            <Input
+                              id="password-length"
+                              type="number"
+                              min={8}
+                              max={128}
+                              value={passwordLength}
+                              onChange={(e) => setPasswordLength(parseInt(e.target.value) || 12)}
+                            />
+                            <span className="text-sm text-muted-foreground">characters</span>
+                          </div>
                         </div>
+
                         <div className="space-y-2">
-                          <Label>Password Options</Label>
-                          <div className="grid grid-cols-2 gap-2">
+                          <Label>Character Types</Label>
+                          <div className="space-y-1">
                             <div className="flex items-center space-x-2">
-                              <Checkbox id="include-uppercase" defaultChecked />
-                              <label htmlFor="include-uppercase" className="text-sm">
-                                Include Uppercase
-                              </label>
+                              <Checkbox 
+                                id="uppercase" 
+                                checked={useUppercase} 
+                                onCheckedChange={(checked) => setUseUppercase(checked === true)}
+                              />
+                              <Label htmlFor="uppercase">Uppercase (A-Z)</Label>
                             </div>
                             <div className="flex items-center space-x-2">
-                              <Checkbox id="include-lowercase" defaultChecked />
-                              <label htmlFor="include-lowercase" className="text-sm">
-                                Include Lowercase
-                              </label>
+                              <Checkbox 
+                                id="lowercase" 
+                                checked={useLowercase} 
+                                onCheckedChange={(checked) => setUseLowercase(checked === true)}
+                              />
+                              <Label htmlFor="lowercase">Lowercase (a-z)</Label>
                             </div>
                             <div className="flex items-center space-x-2">
-                              <Checkbox id="include-numbers" defaultChecked />
-                              <label htmlFor="include-numbers" className="text-sm">
-                                Include Numbers
-                              </label>
+                              <Checkbox 
+                                id="numbers" 
+                                checked={useNumbers} 
+                                onCheckedChange={(checked) => setUseNumbers(checked === true)}
+                              />
+                              <Label htmlFor="numbers">Numbers (0-9)</Label>
                             </div>
                             <div className="flex items-center space-x-2">
-                              <Checkbox id="include-symbols" defaultChecked />
-                              <label htmlFor="include-symbols" className="text-sm">
-                                Include Symbols
-                              </label>
+                              <Checkbox 
+                                id="symbols" 
+                                checked={useSymbols} 
+                                onCheckedChange={(checked) => setUseSymbols(checked === true)}
+                              />
+                              <Label htmlFor="symbols">Symbols (!@#$%&*)</Label>
                             </div>
                           </div>
                         </div>
+
                         <Button type="submit" className="w-full">
-                          <Key className="mr-2 h-4 w-4" />
+                          <RefreshCw className="mr-2 h-4 w-4" />
                           Generate Password
                         </Button>
+
                         {/* Result section - would be conditionally shown after generation */}
-                        <div className="border rounded-md p-4 space-y-4">
-                          <div className="space-y-2">
-                            <Label>Generated Password</Label>
-                            <div className="bg-muted p-2 rounded font-mono text-sm">P@ssw0rd!2345Abc</div>
+                        {generatedPassword && (
+                          <div className="border rounded-md p-4 space-y-4">
+                            <div className="space-y-2">
+                              <Label>Generated Password</Label>
+                              <div className="bg-muted p-2 rounded font-mono text-sm break-all">
+                                {generatedPassword}
+                              </div>
+                            </div>
+                            <Button 
+                              className="w-full" 
+                              variant="outline"
+                              onClick={() => {
+                                navigator.clipboard.writeText(generatedPassword);
+                                // Optionally add a "copied" notification
+                              }}
+                            >
+                              Copy to Clipboard
+                            </Button>
                           </div>
-                          <Button className="w-full" variant="outline">
-                            <Download className="mr-2 h-4 w-4" />
-                            Copy to Clipboard
-                          </Button>
-                        </div>
+                        )}
                       </div>
                     )}
 
@@ -172,7 +323,7 @@ export default function HomePage() {
                       <div className="space-y-4">
                         <div className="space-y-2">
                           <Label>Key Type</Label>
-                          <RadioGroup value={keyType} onValueChange={setKeyType}>
+                          <RadioGroup value={keyType} onValueChange={(value) => setKeyType(value as "symmetric" | "asymmetric")}>
                             <div className="flex items-center space-x-2">
                               <RadioGroupItem value="symmetric" id="symmetric" />
                               <Label htmlFor="symmetric">Symmetric Key</Label>
@@ -187,14 +338,13 @@ export default function HomePage() {
                         {keyType === "symmetric" ? (
                           <div className="space-y-2">
                             <Label>Key Algorithm</Label>
-                            <Select defaultValue="aes-256">
+                            <Select value={symmetricAlgorithm} onValueChange={setSymmetricAlgorithm}>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select algorithm" />
                               </SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="aes-128">AES-128</SelectItem>
-                                <SelectItem value="aes-192">AES-256</SelectItem>
-                                <SelectItem value="aes-256">RSA-2048</SelectItem>
+                                <SelectItem value="aes-256">AES-256</SelectItem>
                                 <SelectItem value="3des">3DES</SelectItem>
                               </SelectContent>
                             </Select>
@@ -202,7 +352,7 @@ export default function HomePage() {
                         ) : (
                           <div className="space-y-2">
                             <Label>Key Algorithm</Label>
-                            <Select defaultValue="rsa-2048">
+                            <Select value={asymmetricAlgorithm} onValueChange={setAsymmetricAlgorithm}>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select algorithm" />
                               </SelectTrigger>
@@ -216,7 +366,12 @@ export default function HomePage() {
 
                         <div className="space-y-2">
                           <Label htmlFor="key-name">Key Name (for file download)</Label>
-                          <Input id="key-name" placeholder="my_key" />
+                          <Input 
+                            id="key-name" 
+                            placeholder="my_key" 
+                            value={keyName}
+                            onChange={(e) => setKeyName(e.target.value)}
+                          />
                         </div>
 
                         <div className="space-y-4">
@@ -226,18 +381,16 @@ export default function HomePage() {
                           </Button>
 
                           {/* Result section - would be conditionally shown after generation */}
-                          <div className="border rounded-md p-4 space-y-4">
-                            <div className="space-y-2">
-                              <Label>Generated Key</Label>
-                              <div className="bg-muted p-2 rounded font-mono text-xs break-all">
-                                f8a2e9c1d7b6a5f4e3d2c1b0a9f8e7d6
+                          {generatedKeyMessage && (
+                            <div className="border rounded-md p-4 space-y-4">
+                              <div className="space-y-2">
+                                <Label>Key Generation Status</Label>
+                                <div className="bg-muted p-2 rounded font-mono text-xs break-all">
+                                  {generatedKeyMessage}
+                                </div>
                               </div>
                             </div>
-                            <Button className="w-full" variant="outline">
-                              <Download className="mr-2 h-4 w-4" />
-                              Download Key
-                            </Button>
-                          </div>
+                          )}
                         </div>
                       </div>
                     )}
@@ -422,7 +575,7 @@ export default function HomePage() {
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="aes-128">AES-128</SelectItem>
-                              <SelectItem value="aes-192">AES-192</SelectItem>
+                              
                               <SelectItem value="aes-256">AES-256</SelectItem>
                               <SelectItem value="3des">3DES</SelectItem>
                             </SelectContent>
