@@ -45,7 +45,11 @@ export default function HomePage() {
   const [useNumbers, setUseNumbers] = useState(true);
   const [useSymbols, setUseSymbols] = useState(true);
   const [generatedPassword, setGeneratedPassword] = useState<string | null>(null);
-
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [result, setResult] = useState<string | null>(null);
+  
+  
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setFile(e.target.files[0])
@@ -65,13 +69,12 @@ export default function HomePage() {
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
+    alert(`Handling submit for: ${selectedOperation}`);
     
     const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
 
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [result, setResult] = useState<string | null>(null);
+    
 
     try {
       setIsLoading(true);
@@ -97,11 +100,7 @@ export default function HomePage() {
           
           console.log("Generating password with parameters:", payload);
           
-          setTimeout(() => {
-            const mockPassword = "Tz7!kL9#mNb@pQ";
-            setGeneratedPassword(mockPassword);
-            setIsLoading(false);
-          }, 500);
+          
           
           break;
         case "generate-key":
