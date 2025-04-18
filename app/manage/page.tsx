@@ -88,7 +88,7 @@ export default function ManagePage() {
       }
 
       // Call your Python backend API to delete the user account
-      const response = await fetch(`${API_URL}/users/delete`, {
+      const response = await fetch(`${API_URL}/users/me`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
