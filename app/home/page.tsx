@@ -49,6 +49,7 @@ export default function HomePage() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<string | null>(null);
   const [encryptionResult, setEncryptionResult] = useState<string | null>(null);
+  const [keyName, setKeyName] = useState("my_key");
   
   
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -132,10 +133,13 @@ export default function HomePage() {
           .map(part => part.toUpperCase())
           .join('-');
         
+        // Get the key name with a fallback
+        const finalKeyName = keyName.trim() || "my_key";
+        
         const payload = {
           key_type: keyType,
           algorithm: formattedAlgorithm,
-          key_name: keyName.trim()
+          key_name: finalKeyName
         };
         
         console.log("Generating key with parameters:", payload);
@@ -472,7 +476,12 @@ export default function HomePage() {
 
                         <div className="space-y-2">
                           <Label htmlFor="key-name">Key Name (for file download)</Label>
-                          <Input id="key-name" placeholder="my_key" />
+                          <Input
+                            id="key-name"
+                            placeholder="my_key"
+                            value={keyName}
+                            onChange={(e) => setKeyName(e.target.value)}
+                          />
                         </div>
 
                         <div className="space-y-4">
