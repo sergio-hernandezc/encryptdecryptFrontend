@@ -731,7 +731,7 @@ export default function HomePage() {
                             <SelectContent>
                               <SelectItem value="1024">1024 bits</SelectItem>
                               <SelectItem value="2048">2048 bits</SelectItem>
-                              <SelectItem value="3072">3072 bits</SelectItem>
+                              
                             </SelectContent>
                           </Select>
                         </div>
