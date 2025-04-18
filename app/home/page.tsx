@@ -193,8 +193,8 @@ export default function HomePage() {
                               </SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="aes-128">AES-128</SelectItem>
-                                <SelectItem value="aes-192">AES-192</SelectItem>
-                                <SelectItem value="aes-256">AES-256</SelectItem>
+                                <SelectItem value="aes-192">AES-256</SelectItem>
+                                <SelectItem value="aes-256">RSA-2048</SelectItem>
                                 <SelectItem value="3des">3DES</SelectItem>
                               </SelectContent>
                             </Select>
@@ -498,7 +498,7 @@ export default function HomePage() {
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="rsa-2048">RSA-2048</SelectItem>
-                              <SelectItem value="rsa-4096">RSA-4096</SelectItem>
+                              
                             </SelectContent>
                           </Select>
                         </div>
@@ -583,7 +583,7 @@ export default function HomePage() {
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="rsa-2048">RSA-2048</SelectItem>
-                              <SelectItem value="rsa-4096">RSA-4096</SelectItem>
+                              
                             </SelectContent>
                           </Select>
                         </div>
