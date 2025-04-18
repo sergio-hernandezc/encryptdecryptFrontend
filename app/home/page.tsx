@@ -570,10 +570,7 @@ export default function HomePage() {
                           {keyFile && <p className="text-sm text-muted-foreground">Selected: {keyFile.name}</p>}
                         </div>
 
-                        <div className="space-y-2">
-                          <Label htmlFor="private-key-password">Private Key Password (if encrypted)</Label>
-                          <Input id="private-key-password" type="password" />
-                        </div>
+                        
 
                         <div className="space-y-2">
                           <Label>Encryption Algorithm (must match what was used for encryption)</Label>
@@ -620,13 +617,13 @@ export default function HomePage() {
                               <SelectValue placeholder="Select algorithm" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="sha224">SHA-224 (SHA-2)</SelectItem>
+                            
                               <SelectItem value="sha256">SHA-256 (SHA-2)</SelectItem>
-                              <SelectItem value="sha384">SHA-384 (SHA-2)</SelectItem>
+                        
                               <SelectItem value="sha512">SHA-512 (SHA-2)</SelectItem>
-                              <SelectItem value="sha3-224">SHA3-224 (SHA-3)</SelectItem>
+                          
                               <SelectItem value="sha3-256">SHA3-256 (SHA-3)</SelectItem>
-                              <SelectItem value="sha3-384">SHA3-384 (SHA-3)</SelectItem>
+                        
                               <SelectItem value="sha3-512">SHA3-512 (SHA-3)</SelectItem>
                             </SelectContent>
                           </Select>
@@ -697,15 +694,12 @@ export default function HomePage() {
                           <Tabs defaultValue="files">
                             <TabsList className="grid w-full grid-cols-2">
                               <TabsTrigger value="files">Compare Files</TabsTrigger>
-                              <TabsTrigger value="hash">Compare with Hash</TabsTrigger>
+                              
                             </TabsList>
                             <TabsContent value="files">
                               <p className="text-sm text-muted-foreground">Both files will be hashed and compared.</p>
                             </TabsContent>
-                            <TabsContent value="hash" className="space-y-2">
-                              <Label htmlFor="hash-value">Hash Value</Label>
-                              <Input id="hash-value" placeholder="Enter hash value to compare against" />
-                            </TabsContent>
+                            
                           </Tabs>
                         </div>
                         <Button type="submit" className="w-full">
