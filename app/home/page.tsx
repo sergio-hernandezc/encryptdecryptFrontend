@@ -50,6 +50,8 @@ export default function HomePage() {
   const [result, setResult] = useState<string | null>(null);
   const [encryptionResult, setEncryptionResult] = useState<string | null>(null);
   const [keyName, setKeyName] = useState("my_key");
+  const [symmetricAlgorithm, setSymmetricAlgorithm] = useState("aes-256");
+  const [asymmetricAlgorithm, setAsymmetricAlgorithm] = useState("rsa-2048");
   
   
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -447,7 +449,7 @@ export default function HomePage() {
                         {keyType === "symmetric" ? (
                           <div className="space-y-2">
                             <Label>Key Algorithm</Label>
-                            <Select defaultValue="aes-256">
+                            <Select value={symmetricAlgorithm} onValueChange={setSymmetricAlgorithm}>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select algorithm" />
                               </SelectTrigger>
@@ -462,7 +464,7 @@ export default function HomePage() {
                         ) : (
                           <div className="space-y-2">
                             <Label>Key Algorithm</Label>
-                            <Select defaultValue="rsa-2048">
+                            <Select value={asymmetricAlgorithm} onValueChange={setAsymmetricAlgorithm}>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select algorithm" />
                               </SelectTrigger>
