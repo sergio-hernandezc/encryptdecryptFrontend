@@ -767,7 +767,7 @@ export default function HomePage() {
                               </SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="rsa-2048">RSA-2048</SelectItem>
-                                <SelectItem value="rsa-4096">RSA-4096</SelectItem>
+                                
                               </SelectContent>
                             </Select>
                           </div>
