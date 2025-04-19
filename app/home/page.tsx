@@ -532,7 +532,7 @@ export default function HomePage() {
         });
         
         // Make the API call
-        const response = await fetch(`${API_URL}/api/decrypt/asymmetric`, {
+        const response = await fetch(`${API_URL}/decrypt/asymmetric`, {
           method: "POST",
           body: formData,
         });
