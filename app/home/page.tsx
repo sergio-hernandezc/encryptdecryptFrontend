@@ -457,7 +457,7 @@ export default function HomePage() {
         const formData = new FormData();
         formData.append("algorithm", "RSA-2048"); // Assuming RSA-2048 is the algorithm
         formData.append("file", file);
-        formData.append("public_key_file", keyFile);
+        formData.append("publicKeyFile", keyFile);
         
         console.log("Encrypting file with asymmetric encryption:", {
           file: file.name,
