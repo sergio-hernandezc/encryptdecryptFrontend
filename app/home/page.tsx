@@ -649,39 +649,55 @@ export default function HomePage() {
           file2: compareFile.name
         });
         
+        setIsLoading(true);
+        setResult(null); // Reset result before starting new comparison
+        
         // Read the first hash file
         const reader1 = new FileReader();
         reader1.onload = (e1) => {
+          console.log("First file read complete");
           // After first file is read, read the second file
           const hash1 = e1.target?.result?.toString().trim();
           
           const reader2 = new FileReader();
           reader2.onload = (e2) => {
+            console.log("Second file read complete");
             const hash2 = e2.target?.result?.toString().trim();
             
             // Compare hashes directly
             const match = hash1 === hash2;
+            console.log("Hash comparison result:", { match, hash1, hash2 });
             
             // Display result with hash values
             const resultText = match 
               ? `✅ The files have matching hashes:\n${hash1}` 
               : `❌ The files have different hashes:\nFile 1: ${hash1}\nFile 2: ${hash2}`;
             
+            // Update state to display result and end loading
             setResult(resultText);
+            setIsLoading(false);
+            console.log("Result state updated");
           };
           
-          reader2.onerror = () => {
-            throw new Error("Error reading the second hash file");
+          reader2.onerror = (error) => {
+            console.error("Error reading second file:", error);
+            setError("Error reading the second hash file");
+            setIsLoading(false);
           };
           
           reader2.readAsText(compareFile);
         };
         
-        reader1.onerror = () => {
-          throw new Error("Error reading the first hash file");
+        reader1.onerror = (error) => {
+          console.error("Error reading first file:", error);
+          setError("Error reading the first hash file");
+          setIsLoading(false);
         };
         
         reader1.readAsText(file);
+        
+        // Return early as we're handling the async operation in the FileReader callbacks
+        return;
       }
 
       if (selectedOperation === "share-key") {
@@ -1320,10 +1336,26 @@ export default function HomePage() {
                           <p>Upload two hash files (.txt) previously generated with the "Hash File" operation.</p>
                           <p>The system will directly compare the hash values without rehashing.</p>
                         </div>
-                        <Button type="submit" className="w-full">
-                          <RefreshCw className="mr-2 h-4 w-4" />
-                          Compare Hashes
+                        <Button type="submit" className="w-full" disabled={isLoading}>
+                          {isLoading ? (
+                            <>
+                              <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                              Comparing...
+                            </>
+                          ) : (
+                            <>
+                              <RefreshCw className="mr-2 h-4 w-4" />
+                              Compare Hashes
+                            </>
+                          )}
                         </Button>
+                        
+                        {/* Result display container */}
+                        {result && (
+                          <div className="mt-4 border rounded-md p-4 bg-green-50 text-green-800">
+                            <div className="whitespace-pre-line">{result}</div>
+                          </div>
+                        )}
                       </div>
                     )}
 
