@@ -870,7 +870,7 @@ export default function HomePage() {
                               <SelectContent>
                                 <SelectItem value="aes-128">AES-128</SelectItem>
                                 <SelectItem value="aes-256">AES-256</SelectItem>
-                                <SelectItem value="rsa-2048">RSA-2048</SelectItem>
+                                
                                 <SelectItem value="3des">3DES</SelectItem>
                               </SelectContent>
                             </Select>
