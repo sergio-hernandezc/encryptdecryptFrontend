@@ -178,6 +178,11 @@ export default function HomePage() {
           }
         }
         
+        // Check if there's a public key available (for asymmetric keys)
+        const hasPublicKey = response.headers.get('X-Public-Key-Available') === 'true';
+        const publicKeyName = response.headers.get('X-Public-Key-Name');
+        
+        // Download the primary key (private key for asymmetric, or symmetric key)
         const downloadUrl = window.URL.createObjectURL(blob);
         const downloadLink = document.createElement('a');
         downloadLink.href = downloadUrl;
@@ -185,11 +190,48 @@ export default function HomePage() {
         document.body.appendChild(downloadLink);
         downloadLink.click();
         document.body.removeChild(downloadLink);
+        window.URL.revokeObjectURL(downloadUrl);
+        
+        // If there's a public key available, download it too
+        if (hasPublicKey && publicKeyName) {
+          try {
+            // Fetch the public key
+            const publicKeyResponse = await fetch(`${API_URL}/generate/key/public/${publicKeyName}`);
+            
+            if (publicKeyResponse.ok) {
+              const publicKeyBlob = await publicKeyResponse.blob();
+              
+              // Get filename for public key
+              const publicKeyContentDisposition = publicKeyResponse.headers.get('content-disposition');
+              let publicKeyFilename = `${publicKeyName}_public.pem`;
+              
+              if (publicKeyContentDisposition && publicKeyContentDisposition.includes('filename=')) {
+                const publicKeyFilenameMatch = publicKeyContentDisposition.match(/filename="(.+)"/);
+                if (publicKeyFilenameMatch && publicKeyFilenameMatch[1]) {
+                  publicKeyFilename = publicKeyFilenameMatch[1];
+                }
+              }
+              
+              // Download the public key
+              const publicKeyDownloadUrl = window.URL.createObjectURL(publicKeyBlob);
+              const publicKeyDownloadLink = document.createElement('a');
+              publicKeyDownloadLink.href = publicKeyDownloadUrl;
+              publicKeyDownloadLink.download = publicKeyFilename;
+              document.body.appendChild(publicKeyDownloadLink);
+              publicKeyDownloadLink.click();
+              document.body.removeChild(publicKeyDownloadLink);
+              window.URL.revokeObjectURL(publicKeyDownloadUrl);
+            }
+          } catch (publicKeyError) {
+            console.error("Failed to download public key:", publicKeyError);
+            // We still continue since we already have the private key
+          }
+        }
         
         // Success message based on key type
         if (keyType === "asymmetric") {
-          setResult(`Success! Downloaded a zip file containing both your private and public keys.
-            • Keep your private key secure and never share it.
+          setResult(`Success! Downloaded both your private and public keys.
+            • Keep your private key (${filename}) secure and never share it.
             • Share your public key with others who need to send you encrypted files.`);
         } else {
           setResult(`Success! Generated and downloaded ${algorithm} key.
