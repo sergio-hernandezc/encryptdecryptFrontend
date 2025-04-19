@@ -166,6 +166,7 @@ export default function HomePage() {
         
         // Handle file download from the response
         const blob = await response.blob();
+        
         // Get filename from content-disposition header if available
         const contentDisposition = response.headers.get('content-disposition');
         let filename = `${keyName}.key`;
@@ -178,17 +179,22 @@ export default function HomePage() {
         }
         
         const downloadUrl = window.URL.createObjectURL(blob);
+        const downloadLink = document.createElement('a');
+        downloadLink.href = downloadUrl;
+        downloadLink.download = filename;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
         
-        // Create a download link
-        const a = document.createElement('a');
-        a.href = downloadUrl;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(downloadUrl);
-        
-        
+        // Success message based on key type
+        if (keyType === "asymmetric") {
+          setResult(`Success! Downloaded a zip file containing both your private and public keys.
+            • Keep your private key secure and never share it.
+            • Share your public key with others who need to send you encrypted files.`);
+        } else {
+          setResult(`Success! Generated and downloaded ${algorithm} key.
+            Keep this key secure - you'll need it for decryption.`);
+        }
       }
       
       if (selectedOperation === "encrypt-symmetric") {
@@ -723,19 +729,17 @@ export default function HomePage() {
                             Generate Key
                           </Button>
 
-                          {/* Result section - would be conditionally shown after generation */}
-                          <div className="border rounded-md p-4 space-y-4">
-                            <div className="space-y-2">
-                              <Label>Generated Key</Label>
-                              <div className="bg-muted p-2 rounded font-mono text-xs break-all">
-                                f8a2e9c1d7b6a5f4e3d2c1b0a9f8e7d6
+                          {/* Result section - conditionally shown after generation */}
+                          {result && (
+                            <div className="border rounded-md p-4 space-y-3">
+                              <div className="space-y-2">
+                                <Label>Result</Label>
+                                <div className="bg-green-50 p-3 rounded text-sm whitespace-pre-line">
+                                  {result}
+                                </div>
                               </div>
                             </div>
-                            <Button className="w-full" variant="outline">
-                              <Download className="mr-2 h-4 w-4" />
-                              Download Key
-                            </Button>
-                          </div>
+                          )}
                         </div>
                       </div>
                     )}
