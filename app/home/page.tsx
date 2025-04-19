@@ -634,6 +634,54 @@ export default function HomePage() {
       }
 
       if (selectedOperation === "compare-hash") {
+        // Validation
+        if (!file || !compareFile) {
+          throw new Error("Please select two hash files to compare");
+        }
+        
+        // Ensure files have .txt extension
+        if (!file.name.endsWith('.txt') || !compareFile.name.endsWith('.txt')) {
+          throw new Error("Please upload .txt files containing hash values");
+        }
+        
+        console.log("Comparing hash files:", {
+          file1: file.name,
+          file2: compareFile.name
+        });
+        
+        // Read the first hash file
+        const reader1 = new FileReader();
+        reader1.onload = (e1) => {
+          // After first file is read, read the second file
+          const hash1 = e1.target?.result?.toString().trim();
+          
+          const reader2 = new FileReader();
+          reader2.onload = (e2) => {
+            const hash2 = e2.target?.result?.toString().trim();
+            
+            // Compare hashes directly
+            const match = hash1 === hash2;
+            
+            // Display result with hash values
+            const resultText = match 
+              ? `✅ The files have matching hashes:\n${hash1}` 
+              : `❌ The files have different hashes:\nFile 1: ${hash1}\nFile 2: ${hash2}`;
+            
+            setResult(resultText);
+          };
+          
+          reader2.onerror = () => {
+            throw new Error("Error reading the second hash file");
+          };
+          
+          reader2.readAsText(compareFile);
+        };
+        
+        reader1.onerror = () => {
+          throw new Error("Error reading the first hash file");
+        };
+        
+        reader1.readAsText(file);
       }
 
       if (selectedOperation === "share-key") {
@@ -1233,11 +1281,12 @@ export default function HomePage() {
                     {selectedOperation === "compare-hash" && (
                       <div className="space-y-4">
                         <div className="space-y-2">
-                          <Label htmlFor="compare-file1-upload">Select First File</Label>
+                          <Label htmlFor="compare-file1-upload">Select First Hash File</Label>
                           <div className="flex items-center gap-2">
                             <Input
                               id="compare-file1-upload"
                               type="file"
+                              accept=".txt"
                               onChange={handleFileChange}
                               className="flex-1"
                             />
@@ -1250,11 +1299,12 @@ export default function HomePage() {
                           {file && <p className="text-sm text-muted-foreground">Selected: {file.name}</p>}
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="compare-file2-upload">Select Second File</Label>
+                          <Label htmlFor="compare-file2-upload">Select Second Hash File</Label>
                           <div className="flex items-center gap-2">
                             <Input
                               id="compare-file2-upload"
                               type="file"
+                              accept=".txt"
                               onChange={handleCompareFileChange}
                               className="flex-1"
                             />
@@ -1266,32 +1316,9 @@ export default function HomePage() {
                           </div>
                           {compareFile && <p className="text-sm text-muted-foreground">Selected: {compareFile.name}</p>}
                         </div>
-                        <div className="space-y-2">
-                          <Label>Hash Algorithm</Label>
-                          <Select name="hash-algorithm" defaultValue="SHA2-256" onValueChange={(value) => setSelectedHashAlgorithm(value)}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select algorithm" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="SHA2-256">SHA-256 (SHA-2)</SelectItem>
-                              <SelectItem value="SHA2-512">SHA-512 (SHA-2)</SelectItem>
-                              <SelectItem value="SHA3-256">SHA3-256 (SHA-3)</SelectItem>
-                              <SelectItem value="SHA3-512">SHA3-512 (SHA-3)</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-2">
-                          <Label>Alternative: Compare with Hash Value</Label>
-                          <Tabs defaultValue="files">
-                            <TabsList className="grid w-full grid-cols-2">
-                              <TabsTrigger value="files">Compare Files</TabsTrigger>
-                              
-                            </TabsList>
-                            <TabsContent value="files">
-                              <p className="text-sm text-muted-foreground">Both files will be hashed and compared.</p>
-                            </TabsContent>
-                            
-                          </Tabs>
+                        <div className="text-sm text-muted-foreground mb-4">
+                          <p>Upload two hash files (.txt) previously generated with the "Hash File" operation.</p>
+                          <p>The system will directly compare the hash values without rehashing.</p>
                         </div>
                         <Button type="submit" className="w-full">
                           <RefreshCw className="mr-2 h-4 w-4" />
