@@ -182,6 +182,15 @@ export default function HomePage() {
         const hasPublicKey = response.headers.get('X-Public-Key-Available') === 'true';
         const publicKeyName = response.headers.get('X-Public-Key-Name');
         
+        // Debug: Log headers to see if we're receiving them properly
+        console.log("Response headers:", {
+          contentDisposition,
+          hasPublicKey,
+          publicKeyName,
+          "X-Public-Key-Available": response.headers.get('X-Public-Key-Available'),
+          "X-Public-Key-Name": response.headers.get('X-Public-Key-Name'),
+        });
+        
         // Download the primary key (private key for asymmetric, or symmetric key)
         const downloadUrl = window.URL.createObjectURL(blob);
         const downloadLink = document.createElement('a');
@@ -194,11 +203,17 @@ export default function HomePage() {
         
         // If there's a public key available, download it too
         if (hasPublicKey && publicKeyName) {
+          console.log("Public key available, attempting to download...", publicKeyName);
           try {
             // Fetch the public key
-            const publicKeyResponse = await fetch(`${API_URL}/generate/key/public/${publicKeyName}`);
+            const publicKeyUrl = `${API_URL}/generate/key/public/${publicKeyName}`;
+            console.log("Fetching public key from:", publicKeyUrl);
+            
+            const publicKeyResponse = await fetch(publicKeyUrl);
+            console.log("Public key response status:", publicKeyResponse.status);
             
             if (publicKeyResponse.ok) {
+              console.log("Public key fetch successful, downloading...");
               const publicKeyBlob = await publicKeyResponse.blob();
               
               // Get filename for public key
@@ -221,9 +236,12 @@ export default function HomePage() {
               publicKeyDownloadLink.click();
               document.body.removeChild(publicKeyDownloadLink);
               window.URL.revokeObjectURL(publicKeyDownloadUrl);
+              console.log("Public key downloaded successfully:", publicKeyFilename);
+            } else {
+              console.error("Failed to fetch public key:", publicKeyResponse.status, publicKeyResponse.statusText);
             }
           } catch (publicKeyError) {
-            console.error("Failed to download public key:", publicKeyError);
+            console.error("Error during public key download:", publicKeyError);
             // We still continue since we already have the private key
           }
         }
@@ -447,7 +465,7 @@ export default function HomePage() {
         });
         
         // Make the API call
-        const response = await fetch(`${API_URL}/api/encrypt/asymmetric`, {
+        const response = await fetch(`${API_URL}/encrypt/asymmetric`, {
           method: "POST",
           body: formData,
         });
