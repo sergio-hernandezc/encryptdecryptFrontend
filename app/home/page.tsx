@@ -617,13 +617,12 @@ export default function HomePage() {
           throw new Error(errorMessage);
         }
         
-        // Get the hash result
-        const result = await response.json();
-        setResult(`File hash (${algorithm}): ${result.hash}`);
+        // Get the hash result as text instead of JSON
+        const hashValue = await response.text();
+        setResult(`File hash (${algorithm}): ${hashValue}`);
         
-        // Optional: Create a downloadable file with the hash
-        const hashText = `Filename: ${file.name}\nAlgorithm: ${algorithm}\nHash: ${result.hash}\nGenerated: ${new Date().toISOString()}`;
-        const blob = new Blob([hashText], { type: 'text/plain' });
+        // Create a downloadable file with the hash
+        const blob = new Blob([hashValue], { type: 'text/plain' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
