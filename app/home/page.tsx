@@ -584,20 +584,17 @@ export default function HomePage() {
           throw new Error("Please select a file to hash");
         }
         
-        // Get the selected hash algorithm and format it
-        const hashAlgorithm = document.querySelector('select[name="hash-algorithm"]')?.value || "sha2-256";
-        const formattedAlgorithm = hashAlgorithm.split('-')
-          .map(part => part.toUpperCase())
-          .join('-');
-          
+        // Use the already formatted algorithm value that matches what the backend expects
+        const algorithm = selectedHashAlgorithm || "SHA2-256";
+        
         // Create FormData to send file and algorithm
         const formData = new FormData();
-        formData.append("algorithm", formattedAlgorithm);
+        formData.append("algorithm", algorithm);
         formData.append("file", file);
         
         console.log("Hashing file:", {
           file: file.name,
-          algorithm: formattedAlgorithm
+          algorithm: algorithm
         });
         
         // Make the API call
@@ -622,10 +619,10 @@ export default function HomePage() {
         
         // Get the hash result
         const result = await response.json();
-        setResult(`File hash (${formattedAlgorithm}): ${result.hash}`);
+        setResult(`File hash (${algorithm}): ${result.hash}`);
         
         // Optional: Create a downloadable file with the hash
-        const hashText = `Filename: ${file.name}\nAlgorithm: ${formattedAlgorithm}\nHash: ${result.hash}\nGenerated: ${new Date().toISOString()}`;
+        const hashText = `Filename: ${file.name}\nAlgorithm: ${algorithm}\nHash: ${result.hash}\nGenerated: ${new Date().toISOString()}`;
         const blob = new Blob([hashText], { type: 'text/plain' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -1211,15 +1208,15 @@ export default function HomePage() {
                         </div>
                         <div className="space-y-2">
                           <Label>Hash Algorithm</Label>
-                          <Select value={selectedHashAlgorithm} onValueChange={setSelectedHashAlgorithm}>
+                          <Select name="hash-algorithm" defaultValue="SHA2-256" onValueChange={(value) => setSelectedHashAlgorithm(value)}>
                             <SelectTrigger>
                               <SelectValue placeholder="Select algorithm" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="sha2-256">SHA-256 (SHA-2)</SelectItem>
-                              <SelectItem value="sha2-512">SHA-512 (SHA-2)</SelectItem>
-                              <SelectItem value="sha3-256">SHA3-256 (SHA-3)</SelectItem>
-                              <SelectItem value="sha3-512">SHA3-512 (SHA-3)</SelectItem>
+                              <SelectItem value="SHA2-256">SHA-256 (SHA-2)</SelectItem>
+                              <SelectItem value="SHA2-512">SHA-512 (SHA-2)</SelectItem>
+                              <SelectItem value="SHA3-256">SHA3-256 (SHA-3)</SelectItem>
+                              <SelectItem value="SHA3-512">SHA3-512 (SHA-3)</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
@@ -1272,15 +1269,15 @@ export default function HomePage() {
                         </div>
                         <div className="space-y-2">
                           <Label>Hash Algorithm</Label>
-                          <Select defaultValue="sha2-256">
+                          <Select name="hash-algorithm" defaultValue="SHA2-256" onValueChange={(value) => setSelectedHashAlgorithm(value)}>
                             <SelectTrigger>
                               <SelectValue placeholder="Select algorithm" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="sha2-256">SHA-256 (SHA-2)</SelectItem>
-                              <SelectItem value="sha2-512">SHA-512 (SHA-2)</SelectItem>
-                              <SelectItem value="sha3-256">SHA3-256 (SHA-3)</SelectItem>
-                              <SelectItem value="sha3-512">SHA3-512 (SHA-3)</SelectItem>
+                              <SelectItem value="SHA2-256">SHA-256 (SHA-2)</SelectItem>
+                              <SelectItem value="SHA2-512">SHA-512 (SHA-2)</SelectItem>
+                              <SelectItem value="SHA3-256">SHA3-256 (SHA-3)</SelectItem>
+                              <SelectItem value="SHA3-512">SHA3-512 (SHA-3)</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
