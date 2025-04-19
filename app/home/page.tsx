@@ -56,6 +56,7 @@ export default function HomePage() {
   const [asymmetricKeyFile, setAsymmetricKeyFile] = useState<File | null>(null);
   const [decryptionAsymmetricResult, setDecryptionAsymmetricResult] = useState<string | null>(null);
   const [encryptionAsymmetricResult, setEncryptionAsymmetricResult] = useState<string | null>(null);
+  const [selectedHashAlgorithm, setSelectedHashAlgorithm] = useState<string | null>(null);
   
   
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -578,6 +579,62 @@ export default function HomePage() {
       }
 
       if (selectedOperation === "hash-file") {
+        // Check if a file is selected
+        if (!file) {
+          throw new Error("Please select a file to hash");
+        }
+        
+        // Get the selected hash algorithm and format it
+        const hashAlgorithm = document.querySelector('select[name="hash-algorithm"]')?.value || "sha2-256";
+        const formattedAlgorithm = hashAlgorithm.split('-')
+          .map(part => part.toUpperCase())
+          .join('-');
+          
+        // Create FormData to send file and algorithm
+        const formData = new FormData();
+        formData.append("algorithm", formattedAlgorithm);
+        formData.append("file", file);
+        
+        console.log("Hashing file:", {
+          file: file.name,
+          algorithm: formattedAlgorithm
+        });
+        
+        // Make the API call
+        const response = await fetch(`${API_URL}/hash`, {
+          method: "POST",
+          body: formData,
+        });
+        
+        if (!response.ok) {
+          // Try to get detailed error if available
+          let errorMessage = `File hashing failed: ${response.statusText}`;
+          try {
+            const errorData = await response.json();
+            if (errorData.detail) {
+              errorMessage = errorData.detail;
+            }
+          } catch (e) {
+            // If we can't parse the error as JSON, use the default message
+          }
+          throw new Error(errorMessage);
+        }
+        
+        // Get the hash result
+        const result = await response.json();
+        setResult(`File hash (${formattedAlgorithm}): ${result.hash}`);
+        
+        // Optional: Create a downloadable file with the hash
+        const hashText = `Filename: ${file.name}\nAlgorithm: ${formattedAlgorithm}\nHash: ${result.hash}\nGenerated: ${new Date().toISOString()}`;
+        const blob = new Blob([hashText], { type: 'text/plain' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${file.name.split('.')[0]}_hash.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
       }
 
       if (selectedOperation === "compare-hash") {
@@ -1154,18 +1211,14 @@ export default function HomePage() {
                         </div>
                         <div className="space-y-2">
                           <Label>Hash Algorithm</Label>
-                          <Select defaultValue="sha256">
+                          <Select value={selectedHashAlgorithm} onValueChange={setSelectedHashAlgorithm}>
                             <SelectTrigger>
                               <SelectValue placeholder="Select algorithm" />
                             </SelectTrigger>
                             <SelectContent>
-                            
-                              <SelectItem value="sha256">SHA-256 (SHA-2)</SelectItem>
-                        
-                              <SelectItem value="sha512">SHA-512 (SHA-2)</SelectItem>
-                          
+                              <SelectItem value="sha2-256">SHA-256 (SHA-2)</SelectItem>
+                              <SelectItem value="sha2-512">SHA-512 (SHA-2)</SelectItem>
                               <SelectItem value="sha3-256">SHA3-256 (SHA-3)</SelectItem>
-                        
                               <SelectItem value="sha3-512">SHA3-512 (SHA-3)</SelectItem>
                             </SelectContent>
                           </Select>
@@ -1219,13 +1272,13 @@ export default function HomePage() {
                         </div>
                         <div className="space-y-2">
                           <Label>Hash Algorithm</Label>
-                          <Select defaultValue="sha256">
+                          <Select defaultValue="sha2-256">
                             <SelectTrigger>
                               <SelectValue placeholder="Select algorithm" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="sha256">SHA-256 (SHA-2)</SelectItem>
-                              <SelectItem value="sha512">SHA-512 (SHA-2)</SelectItem>
+                              <SelectItem value="sha2-256">SHA-256 (SHA-2)</SelectItem>
+                              <SelectItem value="sha2-512">SHA-512 (SHA-2)</SelectItem>
                               <SelectItem value="sha3-256">SHA3-256 (SHA-3)</SelectItem>
                               <SelectItem value="sha3-512">SHA3-512 (SHA-3)</SelectItem>
                             </SelectContent>
